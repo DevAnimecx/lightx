@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "LightX Invisible - Seamless Tab Optimization",
+  "version": "4.0.0",
+  "version_name": "4.0.0-blackvault",
+  "description": "© 2026 Blackvault Inc. All Rights Reserved. 100% invisible tab optimization. Zero interruptions, instant switching, smooth visual effects only.",
+  "author": "Blackvault Inc. - Adarsh Kushwah (Animecx)",
+  "homepage_url": "https://blackvaulttech.netlify.app/",
+  "permissions": [
+    "tabs",
+    "storage",
+    "alarms",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "js/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/polyfill.js", "js/content.js"],
+      "css": ["css/invisible-mode.css"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "html/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "LightX Invisible - © 2026 Blackvault Inc."
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "css/invisible-mode.css",
+        "html/dashboard.html",
+        "html/settings.html",
+        "js/*.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "minimum_chrome_version": "88",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA..."
+}

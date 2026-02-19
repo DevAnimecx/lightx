@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "LightX Invisible - Seamless Tab Optimization",
+  "version": "4.0",
+  "description": "100% invisible tab optimization. Zero interruptions, instant switching, smooth visual effects only. Never pauses videos or affects user experience.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "alarms",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background/service-worker-invisible.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "content/invisible-mode.js"
+      ],
+      "css": ["content/invisible-mode.css"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "ui/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content/invisible-mode.css",
+        "ui/dashboard.html",
+        "ui/settings.html"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

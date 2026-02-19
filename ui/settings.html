@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'self'">
+  <title>LightX Settings</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">LIGHT<span>X</span></div>
+        <div class="version">v4.0</div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="#domains" class="nav-item active" data-section="domains">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </span>
+          <span class="nav-text">Domain Rules</span>
+        </a>
+        <a href="#presets" class="nav-item" data-section="presets">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </span>
+          <span class="nav-text">Quick Presets</span>
+        </a>
+        <a href="#general" class="nav-item" data-section="general">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </span>
+          <span class="nav-text">General</span>
+        </a>
+        <a href="#advanced" class="nav-item" data-section="advanced">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </span>
+          <span class="nav-text">Advanced</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <button class="btn-export" id="export-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10 12 15 17 10"/><path d="M12 15V3"/></svg>
+          <span>Export</span>
+        </button>
+        <button class="btn-import" id="import-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+          <span>Import</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="page-header">
+        <h1 id="page-title">Domain Rules</h1>
+        <div class="header-actions">
+          <button class="btn-primary" id="save-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+            <span>Save Changes</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Domains Section -->
+      <section id="domains-section" class="content-section active">
+        <div class="section-intro">
+          <p>Configure how LightX behaves on specific websites. Add custom rules or use quick presets.</p>
+        </div>
+
+        <!-- Add Domain -->
+        <div class="add-domain-card">
+          <h3>Add Domain Rule</h3>
+          <div class="add-domain-form">
+            <div class="form-group">
+              <label>Domain</label>
+              <input type="text" id="new-domain" placeholder="example.com or *.example.com" class="input-field">
+            </div>
+            <div class="form-group">
+              <label>Preset</label>
+              <select id="new-domain-preset" class="select-field">
+                <option value="">Select a preset...</option>
+                <option value="streaming">Streaming & Media</option>
+                <option value="banking">Banking & Finance</option>
+                <option value="work">Work & Productivity</option>
+                <option value="social">Social Media</option>
+                <option value="shopping">Shopping</option>
+                <option value="news">News & Articles</option>
+                <option value="custom">Custom Settings</option>
+              </select>
+            </div>
+            <button class="btn-add" id="add-domain-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              <span>Add Rule</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Domain List -->
+        <div class="domain-list-container">
+          <div class="list-header">
+            <h3>Active Domain Rules</h3>
+            <span class="count-badge" id="domain-count">0 rules</span>
+          </div>
+          <div class="domain-list" id="domain-list">
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <p>No domain rules yet</p>
+              <p class="empty-subtitle">Add rules above to customize behavior</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Presets Section -->
+      <section id="presets-section" class="content-section">
+        <div class="section-intro">
+          <p>One-click configuration templates for common website types. Apply to current tab or set as default.</p>
+        </div>
+
+        <div class="presets-grid">
+          <div class="preset-card" data-preset="streaming">
+            <div class="preset-header">
+              <span class="preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 8 5 3-5 3V8z"/><path d="M2 20h20"/></svg>
+              </span>
+              <h3>Streaming & Media</h3>
+            </div>
+            <p class="preset-desc">Never optimize. Full protection for YouTube, Netflix, Spotify.</p>
+            <ul class="preset-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Never hibernate</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Always protect media</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Preserve video state</li>
+            </ul>
+            <div class="preset-actions">
+              <button class="btn-apply" data-preset="streaming">Apply to Current Tab</button>
+            </div>
+          </div>
+
+          <div class="preset-card" data-preset="banking">
+            <div class="preset-header">
+              <span class="preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h12"/><path d="M6 12h12"/><path d="M6 16h12"/></svg>
+              </span>
+              <h3>Banking & Finance</h3>
+            </div>
+            <p class="preset-desc">Maximum security. No optimization to prevent session issues.</p>
+            <ul class="preset-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Never optimize</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Always protect forms</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Maximum security</li>
+            </ul>
+            <div class="preset-actions">
+              <button class="btn-apply" data-preset="banking">Apply to Current Tab</button>
+            </div>
+          </div>
+
+          <div class="preset-card" data-preset="work">
+            <div class="preset-header">
+              <span class="preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+              </span>
+              <h3>Work & Productivity</h3>
+            </div>
+            <p class="preset-desc">Conservative optimization. Preserves forms and documents.</p>
+            <ul class="preset-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Conservative mode</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Preserve work state</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Form protection</li>
+            </ul>
+            <div class="preset-actions">
+              <button class="btn-apply" data-preset="work">Apply to Current Tab</button>
+            </div>
+          </div>
+
+          <div class="preset-card" data-preset="social">
+            <div class="preset-header">
+              <span class="preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </span>
+              <h3>Social Media</h3>
+            </div>
+            <p class="preset-desc">Balanced optimization. Allows hibernation when idle.</p>
+            <ul class="preset-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Balanced mode</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Protect when active</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Hibernate when idle</li>
+            </ul>
+            <div class="preset-actions">
+              <button class="btn-apply" data-preset="social">Apply to Current Tab</button>
+            </div>
+          </div>
+
+          <div class="preset-card" data-preset="shopping">
+            <div class="preset-header">
+              <span class="preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              </span>
+              <h3>Shopping & E-commerce</h3>
+            </div>
+            <p class="preset-desc">Preserves cart and checkout. Conservative on product pages.</p>
+            <ul class="preset-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Preserve cart state</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Protect checkout</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Conservative mode</li>
+            </ul>
+            <div class="preset-actions">
+              <button class="btn-apply" data-preset="shopping">Apply to Current Tab</button>
+            </div>
+          </div>
+
+          <div class="preset-card" data-preset="news">
+            <div class="preset-header">
+              <span class="preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+              </span>
+              <h3>News & Articles</h3>
+            </div>
+            <p class="preset-desc">Aggressive optimization OK. Fast hibernation of read articles.</p>
+            <ul class="preset-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Aggressive mode</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Fast hibernation</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Maximize savings</li>
+            </ul>
+            <div class="preset-actions">
+              <button class="btn-apply" data-preset="news">Apply to Current Tab</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- General Section -->
+      <section id="general-section" class="content-section">
+        <div class="section-intro">
+          <p>Configure global behavior and default settings for LightX.</p>
+        </div>
+
+        <div class="settings-grid">
+          <div class="setting-card">
+            <div class="setting-header">
+              <h3>Global Mode</h3>
+              <p>Default optimization level for all websites</p>
+            </div>
+            <div class="setting-control">
+              <div class="mode-selector-large">
+                <button class="mode-option" data-mode="eco">
+                  <span class="mode-name">Eco</span>
+                  <span class="mode-desc">Light optimization</span>
+                </button>
+                <button class="mode-option active" data-mode="balanced">
+                  <span class="mode-name">Balanced</span>
+                  <span class="mode-desc">Recommended</span>
+                </button>
+                <button class="mode-option" data-mode="performance">
+                  <span class="mode-name">Max</span>
+                  <span class="mode-desc">Aggressive</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-card">
+            <div class="setting-header">
+              <h3>Media Protection</h3>
+              <p>When to prevent optimization of videos and audio</p>
+            </div>
+            <div class="setting-control">
+              <select id="media-protection" class="select-field">
+                <option value="always">Always protect media</option>
+                <option value="when_playing" selected>Protect only when playing</option>
+                <option value="never">Don't protect media</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-card">
+            <div class="setting-header">
+              <h3>Form Protection</h3>
+              <p>When to prevent optimization of forms</p>
+            </div>
+            <div class="setting-control">
+              <select id="form-protection" class="select-field">
+                <option value="always">Always protect forms</option>
+                <option value="when_typing" selected>Protect when typing</option>
+                <option value="never">Don't protect forms</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-card">
+            <div class="setting-header">
+              <h3>Notifications</h3>
+              <p>Show toast notifications for optimization events</p>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="show-notifications" checked>
+                <span class="toggle-slider"></span>
+                <span class="toggle-label">Enable notifications</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Advanced Section -->
+      <section id="advanced-section" class="content-section">
+        <div class="section-intro">
+          <p>Advanced settings for power users. Adjust timing and optimization behavior.</p>
+        </div>
+
+        <div class="settings-grid">
+          <div class="setting-card">
+            <div class="setting-header">
+              <h3>Optimization Timing</h3>
+              <p>How long to wait before optimizing tabs</p>
+            </div>
+            <div class="setting-control">
+              <div class="timing-sliders">
+                <div class="timing-item">
+                  <label>Eco after</label>
+                  <input type="range" id="time-eco" min="10" max="300" value="60" class="slider">
+                  <span class="timing-value" id="value-eco">60s</span>
+                </div>
+                <div class="timing-item">
+                  <label>Rest after</label>
+                  <input type="range" id="time-rest" min="60" max="600" value="180" class="slider">
+                  <span class="timing-value" id="value-rest">3m</span>
+                </div>
+                <div class="timing-item">
+                  <label>Deep after</label>
+                  <input type="range" id="time-deep" min="180" max="1800" value="600" class="slider">
+                  <span class="timing-value" id="value-deep">10m</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-card">
+            <div class="setting-header">
+              <h3>Adaptive Mode</h3>
+              <p>Automatically adjust based on battery and memory</p>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="adaptive-mode" checked>
+                <span class="toggle-slider"></span>
+                <span class="toggle-label">Enable adaptive mode</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="setting-card danger-zone">
+            <div class="setting-header">
+              <h3>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 16px; height: 16px; display: inline; vertical-align: middle; margin-right: 6px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                Danger Zone
+              </h3>
+              <p>These actions cannot be undone</p>
+            </div>
+            <div class="setting-control">
+              <button class="btn-danger" id="reset-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                <span>Reset All Settings</span>
+              </button>
+              <button class="btn-danger" id="clear-data-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                <span>Clear All Data</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="edit-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Domain Rule</h3>
+        <button class="modal-close" id="modal-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Domain</label>
+          <input type="text" id="edit-domain" readonly class="input-field">
+        </div>
+        <div class="form-group">
+          <label>Mode</label>
+          <select id="edit-mode" class="select-field">
+            <option value="never">Never Optimize</option>
+            <option value="eco">Eco Mode</option>
+            <option value="balanced">Balanced</option>
+            <option value="performance">Max Performance</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Media Protection</label>
+          <select id="edit-media" class="select-field">
+            <option value="always">Always</option>
+            <option value="when_playing">When Playing</option>
+            <option value="never">Never</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Form Protection</label>
+          <select id="edit-form" class="select-field">
+            <option value="always">Always</option>
+            <option value="when_typing">When Typing</option>
+            <option value="never">Never</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancel-edit">Cancel</button>
+        <button class="btn-primary" id="save-edit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

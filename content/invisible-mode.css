@@ -1,0 +1,120 @@
+/* LightX Invisible Mode - Visual Effects Only (No JavaScript Freezing) */
+
+/* CSS Variables for states */
+:root {
+  --lightx-opacity: 1;
+  --lightx-blur: 0px;
+  --lightx-transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Base state - Active */
+html.lightx-active,
+html.lightx-active body {
+  --lightx-opacity: 1;
+  --lightx-blur: 0px;
+}
+
+/* Eco Mode - Slight dimming */
+html.lightx-eco,
+html.lightx-eco body {
+  --lightx-opacity: 0.85;
+  --lightx-blur: 0px;
+}
+
+/* Rest Mode - More dimming */
+html.lightx-rest,
+html.lightx-rest body {
+  --lightx-opacity: 0.6;
+  --lightx-blur: 1px;
+}
+
+/* Deep Sleep - Maximum visual optimization */
+html.lightx-deep,
+html.lightx-deep body {
+  --lightx-opacity: 0.3;
+  --lightx-blur: 2px;
+}
+
+/* Apply visual effects to main content */
+html.lightx-eco body > *,
+html.lightx-rest body > *,
+html.lightx-deep body > * {
+  opacity: var(--lightx-opacity);
+  filter: blur(var(--lightx-blur));
+  transition: var(--lightx-transition);
+  will-change: opacity, filter;
+}
+
+/* Exclude iframes and media elements from blur to prevent issues */
+html.lightx-eco body > iframe,
+html.lightx-rest body > iframe,
+html.lightx-deep body > iframe,
+html.lightx-eco body > video,
+html.lightx-rest body > video,
+html.lightx-deep body > video,
+html.lightx-eco body > audio,
+html.lightx-rest body > audio,
+html.lightx-deep body > audio,
+html.lightx-eco body > canvas,
+html.lightx-rest body > canvas,
+html.lightx-deep body > canvas {
+  opacity: 1;
+  filter: none;
+}
+
+/* Keep interactive elements visible */
+html.lightx-eco body *[contenteditable="true"],
+html.lightx-rest body *[contenteditable="true"],
+html.lightx-deep body *[contenteditable="true"],
+html.lightx-eco body input:focus,
+html.lightx-rest body input:focus,
+html.lightx-deep body input:focus,
+html.lightx-eco body textarea:focus,
+html.lightx-rest body textarea:focus,
+html.lightx-deep body textarea:focus {
+  opacity: 1;
+  filter: none;
+}
+
+/* Smooth transition when state changes */
+body {
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Indicator badge - subtle corner indicator */
+#lightx-indicator {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 2147483647;
+  pointer-events: none;
+}
+
+html.lightx-eco #lightx-indicator {
+  opacity: 0.6;
+  background: #64d2ff;
+}
+
+html.lightx-rest #lightx-indicator {
+  opacity: 0.6;
+  background: #ff9f0a;
+}
+
+html.lightx-deep #lightx-indicator {
+  opacity: 0.6;
+  background: #ff375f;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  html.lightx-eco body > *,
+  html.lightx-rest body > *,
+  html.lightx-deep body > * {
+    transition: none;
+  }
+}
