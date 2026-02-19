@@ -1,97 +1,97 @@
 <!--
   LightX – Smart Tab & Memory Optimizer
-  SEO keywords: chrome extension, firefox extension, tab manager, memory optimizer, productivity, browser performance, Blackvault, Animecx, LightX
+  Keywords: chrome extension, firefox extension, tab manager, memory optimizer, browser performance, productivity, Animecx, Blackvault, LightX
 -->
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/DevAnimecx/lightx/main/dist/icons/icon128.png" alt="LightX Logo" width="96" />
+<div align="center">
+
+<h1>𝙻𝙸𝙶𝙷𝚃𝚇</h1>
+<h3>𝚂𝙼𝙰𝚁𝚃 𝚃𝙰𝙱 & 𝙼𝙴𝙼𝙾𝚁𝚈 𝙾𝙿𝚃𝙸𝙼𝙸𝚉𝙴𝚁</h3>
+
+<p>
+  Clean • Fast • Cross‑browser • Built for people who live with 50+ tabs open
 </p>
 
-<h1 align="center">𝙻𝙸𝙶𝙷𝚃𝚇 – 𝗦𝗠𝗔𝗥𝗧 𝗧𝗔𝗕 & 𝗠𝗘𝗠𝗢𝗥𝗬 𝗢𝗣𝗧𝗜𝗠𝗜𝗭𝗘𝗥</h1>
-
-<p align="center">
-  Clean. Fast. Cross‑browser. Built for power users who live with 50+ tabs open.
-</p>
-
-<p align="center">
-  <b>Chrome · Edge · Firefox · Opera · (Safari via wrapper)</b>
+<p>
+  <sub>Chrome · Edge · Firefox · Opera · (Safari via wrapper)</sub>
 </p>
 
 ---
 
-## ✨ 𝖶𝗁𝖺𝗍 𝗂𝗌 𝖫𝗂𝗀𝗁𝗍𝖷?
+<p>
+  <b>⚠️ Currently local‑install only.</b><br/>
+  Store listings (Chrome Web Store, Edge Add‑ons, Firefox AMO, Opera Add‑ons) are planned.
+</p>
 
-**LightX** is a multi‑store browser extension that automatically optimizes your tabs, reduces memory usage, and keeps your browsing smooth – without breaking media, forms, or your workflow.  
-It ships with a premium iOS‑inspired UI, analytics dashboard, and a cross‑browser engine that runs on a single shared codebase.
-
-> Think of it as a **smart, invisible performance layer** for your browser.
-
----
-
-## 🚀 𝙺𝙴𝚈 𝙷𝙸𝙶𝙷𝙻𝙸𝙶𝙷𝚃𝚂
-
-- **Invisible Tab Optimization** – 4 intelligent states *(Active → Eco → Rest → Deep)* with smooth opacity/blur transitions.
-- **Smart Protection** – Respects media playback, form inputs, and protected domains (e.g. YouTube, Netflix, OTT, banking).
-- **Cross‑Browser Ready** – Single shared JS/CSS/HTML powering Chrome, Edge, Firefox, Opera (Safari via wrapper).
-- **Premium UI/UX** – Apple‑style design, SVG icons, dark‑mode first, micro‑animations, clean typography.
-- **Analytics Dashboard** – Live memory stats, tab grid, performance metrics, native Canvas charts (no heavy deps).
-- **Advanced Settings** – Domain rules, quick presets, timing sliders, import/export of config.
-- **Production Build System** – One command `./build.sh` generates ready‑to‑submit ZIPs for all major stores.
+</div>
 
 ---
 
-## 📦 𝙵𝙴𝙰𝚃𝚄𝚁𝙴 𝚂𝙴𝚃
+## 🧬 𝐕𝐈𝐒𝐈𝐎𝐍
 
-### 🧠 Invisible Tab Engine
+> 𝖫𝗂𝗀𝗁𝗍𝖷 is a **smart, invisible performance layer** for your browser.
 
-- Auto‑transitions tabs through 4 *energy states* based on usage and activity.
-- CSS‑driven effects (no aggressive JS freezing) for glitch‑free switching.
-- Keeps active tabs crisp while gently dimming idle tabs.
+Most tab managers either kill your tabs too aggressively or look like DevTools.  
+LightX takes a different route: **cinematic UI**, **predictive tab energy states**, and a **cross‑browser engine** that keeps your sessions alive while saving memory.
 
-### 🛡️ Smart Protection Layer
-
-- Detects **video/audio playback** and prevents premature throttling.
-- Protects **forms and input fields** from unwanted refresh or unload.
-- Built‑in **safe list** for streaming, collaboration, and payment sites.
-- User activity tracking to avoid interrupting active work.
-
-### 📊 Performance & Analytics
-
-- Real‑time memory usage indicators.
-- Tab summaries and performance panels.
-- Minimal, dependency‑free charts built on native Canvas.
-
-### 🎛️ Settings & Control
-
-- Per‑domain rules (always active, always protected, custom timeouts).
-- Preset modes (Focus, Balanced, Aggressive).
-- Fine‑tuned timing sliders.
-- Export/Import configuration for power users & teams.
+- Designed for **creators, engineers, traders, students**, and anyone who lives in the browser.
+- Built to feel like a **native OS feature**, not a hacky script.
 
 ---
 
-## 🌐 𝙲𝚁𝙾𝚂𝚂‑𝙱𝚁𝙾𝚆𝚂𝙴𝚁 𝙰𝚁𝙲𝙷𝙸𝚃𝙴𝙲𝚃𝚄𝚁𝙴
+## 🏆 𝐅𝐄𝐀𝐓𝐔𝐑𝐄 𝐌𝐀𝐓𝐑𝐈𝐗
 
-LightX ships with two manifests and one shared core:
+| Area               | What LightX Delivers                                                                 |
+|--------------------|---------------------------------------------------------------------------------------|
+| Tab lifecycle      | 4‑stage intelligent states: Active → Eco → Rest → Deep                               |
+| UX / Design        | iOS‑inspired surfaces, subtle depth, dark‑mode first, SVG icon system                |
+| Performance        | CSS‑driven effects, minimal JS overhead, native Canvas analytics                     |
+| Safety             | Media detection, form protection, protected domain list                              |
+| Portability        | Shared JS/CSS/HTML core, V2 + V3 manifests, store‑ready bundles                      |
+| Control            | Domain rules, presets, timing sliders, import/export                                 |
 
-| Target Browser | Manifest | Folder                       | Status        |
-|----------------|----------|------------------------------|---------------|
-| Chrome         | V3       | `dist/chrome-edge/`          | Local‑ready   |
-| Edge           | V3       | `dist/chrome-edge/`          | Local‑ready   |
-| Firefox        | V2       | `dist/firefox-opera/`        | Local‑ready   |
-| Opera          | V2       | `dist/firefox-opera/`        | Local‑ready   |
-| Safari         | V3       | `dist/shared/` (wrapper req) | Planned       |
+---
 
-### 🧩 Shared Polyfill Layer
+## 🔥 𝐊𝐄𝐘 𝐂𝐀𝐏𝐀𝐁𝐈𝐋𝐈𝐓𝐈𝐄𝐒
 
-```js
-// dist/shared/js/polyfill.js (conceptual)
-const isFirefox = typeof browser !== 'undefined' && browser.runtime;
-const isChrome = typeof chrome !== 'undefined' && chrome.runtime && !isFirefox;
+### 🧠 𝗜𝗻𝘃𝗶𝘀𝗶𝗯𝗹𝗲 𝗧𝗮𝗯 𝗘𝗻𝗴𝗶𝗻𝗲
 
-window.BrowserAPI = {
-  tabs: { /* query, get, update, remove, sendMessage */ },
-  storage: { local: { /* get, set, remove, clear */ } },
-  runtime: { /* sendMessage, onMessage */ },
-  alarms: { /* create, clear, onAlarm */ }
-};
+- 4 intelligent **energy states** per tab (Active / Eco / Rest / Deep).
+- Smooth opacity + blur transitions with **zero jank** on tab switch.
+- Designed to *feel* like your browser always had this baked‑in.
+
+### 🛡️ 𝗦𝗺𝗮𝗿𝘁 𝗣𝗿𝗼𝘁𝗲𝗰𝘁𝗶𝗼𝗻
+
+- Detects **video/audio playback** and keeps those tabs alive.
+- Protects **forms, editors, and important flows** from surprise reloads.
+- Built‑in **safe list** (streaming, banking, collab suites), plus user rules.
+
+### 📊 𝗣𝗲𝗿𝗳𝗼𝗿𝗺𝗮𝗻𝗰𝗲 𝗜𝗻𝘀𝗶𝗴𝗵𝘁𝘀
+
+- Real‑time memory and tab stats.
+- Tab grid with quick visibility into heavy / idle tabs.
+- Zero external chart libraries – **native Canvas only** for low overhead.
+
+### 🎚️ 𝗣𝗼𝘄𝗲𝗿 𝗨𝘀𝗲𝗿 𝗖𝗼𝗻𝘁𝗿𝗼𝗹
+
+- Per‑domain behaviors: “Always active”, “Always protected”, custom timeouts.
+- Opinionated presets (Focus, Balanced, Aggressive).
+- Import/export config – sync your setup across machines and teams.
+
+---
+
+## 🌐 𝐂𝐑𝐎𝐒𝐒‑𝐁𝐑𝐎𝐖𝐒𝐄𝐑 𝐄𝐍𝐆𝐈𝐍𝐄
+
+LightX is structured as a **multi‑store product** with a single shared core.
+
+```text
+dist/
+├── chrome-edge/           # Manifest V3 for Chromium-based browsers
+│   └── manifest.json
+├── firefox-opera/         # Manifest V2 for Firefox & Opera
+│   └── manifest.json
+└── shared/                # Universal logic & UI
+    ├── js/
+    ├── css/
+    ├── html/
+    └── icons/
