@@ -1,5 +1,9 @@
 // LightX Settings Page - All functionality
 document.addEventListener('DOMContentLoaded', function() {
+  // Use BrowserAPI polyfill if available, otherwise fall back to chrome/browser
+  const API = typeof BrowserAPI !== 'undefined' ? BrowserAPI :
+              (typeof browser !== 'undefined' ? browser : chrome);
+
   let currentDomainRules = [];
   let editingDomain = null;
   let currentSection = 'domains';
@@ -89,11 +93,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function loadDomainRules() {
     try {
-      currentDomainRules = [
-        { domain: 'youtube.com', preset: 'streaming', mode: 'never', media: 'always', form: 'always' },
-        { domain: 'github.com', preset: 'work', mode: 'balanced', media: 'when_playing', form: 'always' },
-        { domain: 'reddit.com', preset: 'social', mode: 'balanced', media: 'when_playing', form: 'when_typing' }
-      ];
+      const result = await API.storage.local.get(['lightxDomainRules']);
+      if (result.lightxDomainRules) {
+        currentDomainRules = result.lightxDomainRules;
+      } else {
+        currentDomainRules = [
+          { domain: 'youtube.com', preset: 'streaming', mode: 'never', media: 'always', form: 'always' },
+          { domain: 'github.com', preset: 'work', mode: 'balanced', media: 'when_playing', form: 'always' },
+          { domain: 'reddit.com', preset: 'social', mode: 'balanced', media: 'when_playing', form: 'when_typing' }
+        ];
+        await API.storage.local.set({ lightxDomainRules: currentDomainRules });
+      }
       renderDomainList();
     } catch (error) {
       console.error('Error loading domain rules:', error);
@@ -200,15 +210,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const newRule = {
       domain: domain,
       preset: preset,
-      mode: preset === 'never' ? 'never' : 'balanced',
-      media: 'when_playing',
-      form: 'when_typing'
+      mode: preset === 'streaming' || preset === 'banking' ? 'never' : 'balanced',
+      media: preset === 'streaming' ? 'always' : 'when_playing',
+      form: preset === 'banking' ? 'always' : 'when_typing'
     };
     
     currentDomainRules.push(newRule);
     domainInput.value = '';
     presetSelect.value = '';
     renderDomainList();
+    await saveAllSettings();
     showToast(`Added rule for ${domain}`, 'success');
   }
 
@@ -224,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('edit-modal').classList.add('active');
   }
 
-  function saveDomainEdit() {
+  async function saveDomainEdit() {
     if (editingDomain === null) return;
     
     currentDomainRules[editingDomain] = {
@@ -236,15 +247,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     renderDomainList();
     closeModal();
+    await saveAllSettings();
     showToast('Domain rule updated', 'success');
   }
 
-  function deleteDomain(index) {
+  async function deleteDomain(index) {
     if (!confirm('Delete this domain rule?')) return;
     
     const domain = currentDomainRules[index].domain;
     currentDomainRules.splice(index, 1);
     renderDomainList();
+    await saveAllSettings();
     showToast(`Deleted rule for ${domain}`, 'success');
   }
 
@@ -255,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function applyPreset(presetName) {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const [tab] = await API.tabs.query({ active: true, currentWindow: true });
       if (!tab || !tab.url) {
         showToast('No active tab found', 'error');
         return;
@@ -281,6 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       renderDomainList();
+      await saveAllSettings();
       showToast(`Applied ${getPresetName(presetName)} to ${domain}`, 'success');
     } catch (error) {
       showToast('Failed to apply preset', 'error');
@@ -289,14 +303,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function loadGeneralSettings() {
     try {
+      const result = await API.storage.local.get(['lightxSettings', 'lightxMode']);
+      const mode = result.lightxMode || 'balanced';
       const settings = {
-        mode: 'balanced',
+        mode: mode,
         mediaProtection: 'when_playing',
         formProtection: 'when_typing',
         showNotifications: true,
         adaptiveMode: true,
         timing: { eco: 60, rest: 180, deep: 600 }
       };
+      if (result.lightxSettings) {
+        Object.assign(settings, result.lightxSettings);
+      }
       
       document.getElementById('media-protection').value = settings.mediaProtection;
       document.getElementById('form-protection').value = settings.formProtection;
@@ -325,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     document.querySelector(`.mode-option[data-mode="${mode}"]`).classList.add('active');
     
-    chrome.storage.local.set({ lightxMode: mode });
+    API.storage.local.set({ lightxMode: mode });
     showToast(`Switched to ${mode} mode`, 'success');
   }
 
@@ -344,13 +363,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       };
       
-      await chrome.storage.local.set({ lightxSettings: settings });
+      await API.storage.local.set({ lightxSettings: settings });
     }, 500);
   }
 
   async function saveAllSettings() {
     try {
-      await chrome.storage.local.set({ lightxDomainRules: currentDomainRules });
+      await API.storage.local.set({ lightxDomainRules: currentDomainRules });
       await saveGeneralSettings();
       showToast('All settings saved', 'success');
     } catch (error) {
@@ -361,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
   async function exportSettings() {
     const data = {
       domainRules: currentDomainRules,
-      settings: await chrome.storage.local.get(['lightxSettings', 'lightxMode']),
+      settings: await API.storage.local.get(['lightxSettings', 'lightxMode']),
       exportedAt: new Date().toISOString()
     };
     
@@ -397,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           
           if (data.settings) {
-            await chrome.storage.local.set(data.settings);
+            await API.storage.local.set(data.settings);
             await loadGeneralSettings();
           }
           
@@ -416,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!confirm('Reset all settings to defaults? This cannot be undone.')) return;
     
     currentDomainRules = [];
-    await chrome.storage.local.remove(['lightxDomainRules', 'lightxSettings', 'lightxMode']);
+    await API.storage.local.remove(['lightxDomainRules', 'lightxSettings', 'lightxMode']);
     
     renderDomainList();
     await loadGeneralSettings();
@@ -427,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!confirm('Clear all LightX data? This will remove all settings and rules.')) return;
     if (!confirm('Are you sure? This action cannot be undone.')) return;
     
-    await chrome.storage.local.clear();
+    await API.storage.local.clear();
     currentDomainRules = [];
     renderDomainList();
     showToast('All data cleared', 'success');

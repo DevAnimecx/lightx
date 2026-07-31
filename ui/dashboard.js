@@ -2,6 +2,10 @@
 (function() {
   'use strict';
 
+  // Use BrowserAPI polyfill if available, otherwise fall back to chrome/browser
+  const API = typeof BrowserAPI !== 'undefined' ? BrowserAPI :
+              (typeof browser !== 'undefined' ? browser : chrome);
+
   // State
   let tabs = [];
   let chartData = [];
@@ -217,28 +221,46 @@
 
   async function loadDashboardData() {
     try {
-      tabs = await chrome.tabs.query({});
-      const activeTab = await chrome.tabs.query({ active: true, currentWindow: true });
+      tabs = await API.tabs.query({});
+      const activeTab = await API.tabs.query({ active: true, currentWindow: true });
+
+      const response = await new Promise(resolve => {
+        API.runtime.sendMessage({ action: 'getTabStates' }, response => {
+          resolve(response || { tabStates: [] });
+        });
+      });
+      const tabStatesMap = new Map(response.tabStates || []);
       
       const totalTabs = tabs.length;
       const backgroundTabs = tabs.filter(tab => !tab.active);
-      const memorySaved = calculateMemorySaved(backgroundTabs.length);
-      const efficiency = calculateEfficiency(backgroundTabs.length, totalTabs);
+
+      let optimizedCount = 0;
+      let ecoCount = 0, restCount = 0, deepCount = 0;
+      for (const tab of backgroundTabs) {
+        const tabStateObj = tabStatesMap.get(tab.id);
+        if (tabStateObj) {
+          if (tabStateObj.state === 'eco') { ecoCount++; optimizedCount++; }
+          else if (tabStateObj.state === 'rest') { restCount++; optimizedCount++; }
+          else if (tabStateObj.state === 'deep') { deepCount++; optimizedCount++; }
+        }
+      }
+
+      const memorySaved = calculateMemorySaved(optimizedCount);
+      const efficiency = calculateEfficiency(optimizedCount, totalTabs);
       
       animateValue('memory-saved', parseInt(document.getElementById('memory-saved')?.textContent) || 0, memorySaved, 1000);
-      animateValue('tabs-optimized', parseInt(document.getElementById('tabs-optimized')?.textContent) || 0, backgroundTabs.length, 1000);
+      animateValue('tabs-optimized', parseInt(document.getElementById('tabs-optimized')?.textContent) || 0, optimizedCount, 1000);
       animateValue('efficiency', parseInt(document.getElementById('efficiency')?.textContent?.replace('%', '')) || 0, efficiency, 1000, '%');
       
       // Update avg switch time
       document.getElementById('avg-switch').textContent = '23ms';
       
-      const stateCounts = countTabStates(backgroundTabs);
       document.getElementById('count-active').textContent = tabs.filter(t => t.active).length;
-      document.getElementById('count-eco').textContent = stateCounts.eco;
-      document.getElementById('count-rest').textContent = stateCounts.rest;
-      document.getElementById('count-deep').textContent = stateCounts.deep;
+      document.getElementById('count-eco').textContent = ecoCount;
+      document.getElementById('count-rest').textContent = restCount;
+      document.getElementById('count-deep').textContent = deepCount;
       
-      renderTabGrid(backgroundTabs, activeTab[0]);
+      renderTabGrid(backgroundTabs, activeTab[0], tabStatesMap);
       
       // Update chart with new data
       const canvas = document.getElementById('memory-chart');
@@ -260,18 +282,7 @@
     return Math.round((backgroundTabs / totalTabs) * 100);
   }
 
-  function countTabStates(backgroundTabs) {
-    const counts = { eco: 0, rest: 0, deep: 0 };
-    backgroundTabs.forEach((tab, index) => {
-      const stateIndex = index % 3;
-      if (stateIndex === 0) counts.eco++;
-      else if (stateIndex === 1) counts.rest++;
-      else counts.deep++;
-    });
-    return counts;
-  }
-
-  function renderTabGrid(backgroundTabs, activeTab) {
+  function renderTabGrid(backgroundTabs, activeTab, tabStatesMap) {
     const grid = document.getElementById('tab-grid');
     if (!grid) return;
 
@@ -282,7 +293,7 @@
     });
 
     grid.innerHTML = sortedTabs.slice(0, 12).map((tab, index) => {
-      const state = getTabState(tab, index);
+      const state = getTabState(tab, tabStatesMap);
       const isActive = tab.active;
       const favicon = getFaviconIcon(tab.url);
       
@@ -314,7 +325,7 @@
       item.addEventListener('click', (e) => {
         if (e.target.closest('.tab-actions')) return;
         const tabId = parseInt(item.dataset.tabId);
-        chrome.tabs.update(tabId, { active: true });
+        API.tabs.update(tabId, { active: true });
       });
     });
 
@@ -325,10 +336,10 @@
         const action = btn.dataset.action;
         
         if (action === 'refresh') {
-          chrome.tabs.reload(tabId);
+          API.tabs.reload(tabId);
           showToast('Tab refreshed', 'success');
         } else if (action === 'close') {
-          chrome.tabs.remove(tabId);
+          API.tabs.remove(tabId);
           btn.closest('.tab-item').remove();
           showToast('Tab closed', 'success');
         }
@@ -347,10 +358,10 @@
     });
   }
 
-  function getTabState(tab, index) {
+  function getTabState(tab, tabStatesMap) {
     if (tab.active) return 'active';
-    const states = ['eco', 'rest', 'deep'];
-    return states[index % 3];
+    const tabStateObj = tabStatesMap.get(tab.id);
+    return tabStateObj ? tabStateObj.state : 'active';
   }
 
   function getFaviconIcon(url) {
@@ -375,67 +386,77 @@
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 8 5 3-5 3V8z"/><path d="M2 20h20"/></svg>`;
   }
 
+  // Search Icon
   function getSearchIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
   }
 
+  // Code Icon
   function getCodeIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 18-6-6 6-6"/><path d="m16 6 6 6-6 6"/></svg>`;
   }
 
+  // Message Icon
   function getMessageIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
   }
 
+  // Users Icon
   function getUsersIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
   }
 
+  // Circle Icon
   function getCircleIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>`;
   }
 
+  // Box Icon
   function getBoxIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`;
   }
 
+  // Film Icon
   function getFilmIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><path d="M7 2v20"/><path d="M17 2v20"/><path d="M2 12h20"/><path d="M2 7h5"/><path d="M2 17h5"/><path d="M17 17h5"/><path d="M17 7h5"/></svg>`;
   }
 
+  // Music Icon
   function getMusicIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v20"/></svg>`;
   }
 
   function loadActivity() {
-    const activities = [
-      { icon: 'save', text: 'Saved 245 MB of memory', time: '2 minutes ago' },
-      { icon: 'zap', text: 'Optimized 12 background tabs', time: '5 minutes ago' },
-      { icon: 'target', text: 'Switched to Balanced mode', time: '12 minutes ago' },
-      { icon: 'battery', text: 'Battery optimization enabled', time: '1 hour ago' },
-      { icon: 'rocket', text: 'Extension updated to v4.0', time: '2 hours ago' }
-    ];
+    API.storage.local.get(['lightxActivities'], (result) => {
+      const activities = result.lightxActivities || [
+        { icon: 'save', text: 'Saved 245 MB of memory', time: '2 minutes ago' },
+        { icon: 'zap', text: 'Optimized 12 background tabs', time: '5 minutes ago' },
+        { icon: 'target', text: 'Switched to Balanced mode', time: '12 minutes ago' },
+        { icon: 'battery', text: 'Battery optimization enabled', time: '1 hour ago' },
+        { icon: 'rocket', text: 'Extension updated to v4.0', time: '2 hours ago' }
+      ];
 
-    const icons = {
-      save: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`,
-      zap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-      target: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
-      battery: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/><path d="M6 11v2"/></svg>`,
-      rocket: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>`
-    };
+      const icons = {
+        save: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`,
+        zap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+        target: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+        battery: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/><path d="M6 11v2"/></svg>`,
+        rocket: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>`
+      };
 
-    const list = document.getElementById('activity-list');
-    if (!list) return;
+      const list = document.getElementById('activity-list');
+      if (!list) return;
 
-    list.innerHTML = activities.map(activity => `
-      <div class="activity-item">
-        <div class="activity-icon">${icons[activity.icon]}</div>
-        <div class="activity-content">
-          <div class="activity-text">${activity.text}</div>
-          <div class="activity-time">${activity.time}</div>
+      list.innerHTML = activities.map(activity => `
+        <div class="activity-item">
+          <div class="activity-icon">${icons[activity.icon] || icons.zap}</div>
+          <div class="activity-content">
+            <div class="activity-text">${escapeHtml(activity.text)}</div>
+            <div class="activity-time">${escapeHtml(activity.time)}</div>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `).join('');
+    });
   }
 
   function animateValue(elementId, start, end, duration, suffix = '') {
@@ -465,7 +486,7 @@
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Optimizing...</span>';
     btn.disabled = true;
     
-    setTimeout(() => {
+    API.runtime.sendMessage({ action: 'optimizeAll' }, (response) => {
       btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px;"><path d="M20 6 9 17l-5-5"/></svg><span>Optimized!</span>';
       showToast('All tabs optimized successfully', 'success');
       
@@ -474,7 +495,7 @@
         btn.disabled = false;
         loadDashboardData();
       }, 2000);
-    }, 1500);
+    });
   }
 
   async function exportData() {

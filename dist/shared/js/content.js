@@ -13,24 +13,27 @@
  */
 
 /**
- * LightX Invisible Mode - Content Script
- * Visual Effects Only - Never Freezes JavaScript
- * Cross-browser compatible (Chrome/Firefox/Edge/Opera)
+ * LightX Invisible Mode - Content Script (Visual Effects Only)
+ * Universal logic loaded on every web page.
  */
 
 (function() {
   'use strict';
 
-  // Use BrowserAPI polyfill if available
+  // Use BrowserAPI polyfill if available, otherwise fall back to chrome/browser
   const API = typeof BrowserAPI !== 'undefined' ? BrowserAPI : 
               (typeof browser !== 'undefined' ? browser : chrome);
 
   // State management
   let currentState = 'active';
   let stateTimer = null;
+  let tabRule = null;
+  let globalSettings = null;
+  let globalMode = 'balanced';
   
   // Initialize
   function init() {
+    // Check if already initialized
     if (window.lightxInitialized) return;
     window.lightxInitialized = true;
     
@@ -60,21 +63,28 @@
     addIndicator();
     
     // Notify background script that content script is ready
-    API.runtime.sendMessage({ 
-      action: 'contentScriptReady', 
-      url: window.location.href 
+    API.runtime.sendMessage({ action: 'contentScriptReady', url: window.location.href }, (response) => {
+      if (response && response.success) {
+        tabRule = response.rule;
+        globalSettings = response.settings;
+        globalMode = response.mode;
+      }
     });
   }
   
   // Set visual state (CSS-only, never freezes JS)
   function setVisualState(state) {
+    // Remove all state classes
     document.documentElement.classList.remove('lightx-active', 'lightx-eco', 'lightx-rest', 'lightx-deep');
     
+    // Add new state class
     currentState = state || 'active';
     document.documentElement.classList.add(`lightx-${currentState}`);
     
+    // Update indicator
     updateIndicator(state);
     
+    // Log for debugging (only in development)
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
       console.log(`[LightX] State changed to: ${currentState}`);
     }
@@ -108,9 +118,11 @@
       pointer-events: none !important;
     `;
     
+    // Append to document
     if (document.body) {
       document.body.appendChild(indicator);
     } else {
+      // Wait for body
       const observer = new MutationObserver(() => {
         if (document.body) {
           document.body.appendChild(indicator);
@@ -124,8 +136,11 @@
   // Handle page visibility changes
   function handleVisibilityChange() {
     if (document.hidden) {
-      scheduleStateChange('eco', 60000);
+      // Page is hidden - can apply stronger optimization after delay
+      const ecoDelay = globalSettings ? globalSettings.ecoDelay : 60000;
+      scheduleStateChange('eco', ecoDelay);
     } else {
+      // Page is visible - restore immediately
       clearScheduledStateChange();
       setVisualState('active');
     }
@@ -135,12 +150,16 @@
   function scheduleStateChange(state, delay) {
     clearScheduledStateChange();
     stateTimer = setTimeout(() => {
+      // Only change if still hidden and not protected
       if (document.hidden && !isProtected()) {
         setVisualState(state);
+        // Schedule next level
+        const restDelay = globalSettings ? globalSettings.restDelay : 120000;
+        const deepDelay = globalSettings ? globalSettings.deepDelay : 300000;
         if (state === 'eco') {
-          scheduleStateChange('rest', 120000);
+          scheduleStateChange('rest', restDelay);
         } else if (state === 'rest') {
-          scheduleStateChange('deep', 300000);
+          scheduleStateChange('deep', deepDelay);
         }
       }
     }, delay);
@@ -154,10 +173,18 @@
     }
   }
   
-  // Check if page is protected
+  // Check if page is protected (form input, media playing, etc.)
   function isProtected() {
+    const mediaProt = tabRule ? tabRule.media : (globalSettings ? globalSettings.mediaProtection : 'when_playing');
+    const formProt = tabRule ? tabRule.form : (globalSettings ? globalSettings.formProtection : 'when_typing');
+
+    if (mediaProt === 'always') {
+      return true;
+    }
+
+    // Check for active form inputs
     const activeElement = document.activeElement;
-    if (activeElement) {
+    if (activeElement && formProt !== 'never') {
       const tagName = activeElement.tagName.toLowerCase();
       const isInput = ['input', 'textarea', 'select'].includes(tagName);
       const isContentEditable = activeElement.isContentEditable;
@@ -166,17 +193,26 @@
       }
     }
     
-    const videos = document.querySelectorAll('video');
-    for (const video of videos) {
-      if (!video.paused && !video.ended) {
+    if (formProt === 'always') {
+      const forms = document.querySelectorAll('form, input, textarea, select');
+      if (forms.length > 0) {
         return true;
       }
     }
     
-    const audios = document.querySelectorAll('audio');
-    for (const audio of audios) {
-      if (!audio.paused && !audio.ended) {
-        return true;
+    if (mediaProt !== 'never') {
+      const videos = document.querySelectorAll('video');
+      for (const video of videos) {
+        if (!video.paused && !video.ended) {
+          return true;
+        }
+      }
+
+      const audios = document.querySelectorAll('audio');
+      for (const audio of audios) {
+        if (!audio.paused && !audio.ended) {
+          return true;
+        }
       }
     }
     
@@ -186,6 +222,7 @@
   // Set up form input protection
   function setupFormProtection() {
     const handleInputFocus = () => {
+      // When user focuses an input, ensure we're in active state
       if (currentState !== 'active') {
         setVisualState('active');
       }
@@ -194,6 +231,7 @@
     
     document.addEventListener('focusin', handleInputFocus);
     
+    // Also check periodically for focused elements
     setInterval(() => {
       const activeElement = document.activeElement;
       if (activeElement) {
@@ -208,18 +246,21 @@
   // Set up media protection
   function setupMediaProtection() {
     const handleMediaPlay = () => {
+      // When media starts playing, ensure we're in active state
       if (currentState !== 'active') {
         setVisualState('active');
       }
       clearScheduledStateChange();
     };
     
+    // Monitor for video/audio elements
     const mediaObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node.tagName === 'VIDEO' || node.tagName === 'AUDIO') {
             node.addEventListener('play', handleMediaPlay);
           }
+          // Check children too
           if (node.querySelectorAll) {
             node.querySelectorAll('video, audio').forEach(media => {
               media.addEventListener('play', handleMediaPlay);
@@ -234,6 +275,7 @@
       subtree: true
     });
     
+    // Also add listeners to existing media
     document.querySelectorAll('video, audio').forEach(media => {
       media.addEventListener('play', handleMediaPlay);
     });
@@ -246,6 +288,7 @@
     init();
   }
   
+  // Also try immediate init for early setup
   setTimeout(init, 0);
   
 })();

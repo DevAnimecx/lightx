@@ -7,7 +7,9 @@
   // State management
   let currentState = 'active';
   let stateTimer = null;
-  let observer = null;
+  let tabRule = null;
+  let globalSettings = null;
+  let globalMode = 'balanced';
   
   // Initialize
   function init() {
@@ -41,7 +43,13 @@
     addIndicator();
     
     // Notify background script that content script is ready
-    chrome.runtime.sendMessage({ action: 'contentScriptReady', url: window.location.href });
+    chrome.runtime.sendMessage({ action: 'contentScriptReady', url: window.location.href }, (response) => {
+      if (response && response.success) {
+        tabRule = response.rule;
+        globalSettings = response.settings;
+        globalMode = response.mode;
+      }
+    });
   }
   
   // Set visual state (CSS-only, never freezes JS)
@@ -109,7 +117,8 @@
   function handleVisibilityChange() {
     if (document.hidden) {
       // Page is hidden - can apply stronger optimization after delay
-      scheduleStateChange('eco', 60000); // 1 minute
+      const ecoDelay = globalSettings ? globalSettings.ecoDelay : 60000;
+      scheduleStateChange('eco', ecoDelay);
     } else {
       // Page is visible - restore immediately
       clearScheduledStateChange();
@@ -125,10 +134,12 @@
       if (document.hidden && !isProtected()) {
         setVisualState(state);
         // Schedule next level
+        const restDelay = globalSettings ? globalSettings.restDelay : 120000;
+        const deepDelay = globalSettings ? globalSettings.deepDelay : 300000;
         if (state === 'eco') {
-          scheduleStateChange('rest', 120000); // 2 more minutes
+          scheduleStateChange('rest', restDelay);
         } else if (state === 'rest') {
-          scheduleStateChange('deep', 300000); // 5 more minutes
+          scheduleStateChange('deep', deepDelay);
         }
       }
     }, delay);
@@ -144,9 +155,16 @@
   
   // Check if page is protected (form input, media playing, etc.)
   function isProtected() {
+    const mediaProt = tabRule ? tabRule.media : (globalSettings ? globalSettings.mediaProtection : 'when_playing');
+    const formProt = tabRule ? tabRule.form : (globalSettings ? globalSettings.formProtection : 'when_typing');
+
+    if (mediaProt === 'always') {
+      return true;
+    }
+
     // Check for active form inputs
     const activeElement = document.activeElement;
-    if (activeElement) {
+    if (activeElement && formProt !== 'never') {
       const tagName = activeElement.tagName.toLowerCase();
       const isInput = ['input', 'textarea', 'select'].includes(tagName);
       const isContentEditable = activeElement.isContentEditable;
@@ -155,18 +173,26 @@
       }
     }
     
-    // Check for playing media
-    const videos = document.querySelectorAll('video');
-    for (const video of videos) {
-      if (!video.paused && !video.ended) {
+    if (formProt === 'always') {
+      const forms = document.querySelectorAll('form, input, textarea, select');
+      if (forms.length > 0) {
         return true;
       }
     }
     
-    const audios = document.querySelectorAll('audio');
-    for (const audio of audios) {
-      if (!audio.paused && !audio.ended) {
-        return true;
+    if (mediaProt !== 'never') {
+      const videos = document.querySelectorAll('video');
+      for (const video of videos) {
+        if (!video.paused && !video.ended) {
+          return true;
+        }
+      }
+
+      const audios = document.querySelectorAll('audio');
+      for (const audio of audios) {
+        if (!audio.paused && !audio.ended) {
+          return true;
+        }
       }
     }
     
