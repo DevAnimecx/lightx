@@ -1,5 +1,26 @@
-// LightX Popup - All functionality in external script
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════════╗
+ * ║ BLACKVAULT INC. - PROPRIETARY & CONFIDENTIAL                                 ║
+ * ║ Developed By: Adarsh Kushwah (Animecx)                                       ║
+ * ║ Company: Blackvault Inc. -  Website: https://blackvaulttech.netlify.app/      ║
+ * ║ Owner: Adarsh Kushwah -  GitHub: https://github.com/DevAnimecx                ║
+ * ║ Product: Browser Extension (Multi-Store) -  Pricing: FREE (Premium Soon)      ║
+ * ║                                                                              ║
+ * ║ ⚠️  LICENSE: © 2026 Blackvault Inc. ALL RIGHTS RESERVED.                     ║
+ * ║    UNAUTHORIZED COPYING, MODIFICATION, DISTRIBUTION STRICTLY PROHIBITED.     ║
+ * ║    Subject to Blackvault Inc. Terms & Conditions. Legal action will be taken.║
+ * ╚══════════════════════════════════════════════════════════════════════════════╝
+ */
+
+/**
+ * LightX Extension Popup UI
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
+  // Use BrowserAPI polyfill if available, otherwise fall back to chrome/browser
+  const API = typeof BrowserAPI !== 'undefined' ? BrowserAPI :
+              (typeof browser !== 'undefined' ? browser : chrome);
+
   // State
   let currentMode = 'balanced';
   let refreshInterval = null;
@@ -21,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function loadCurrentMode() {
     try {
-      const result = await chrome.storage.local.get(['lightxMode']);
+      const result = await API.storage.local.get(['lightxMode']);
       currentMode = result.lightxMode || 'balanced';
       updateModeButtons();
     } catch (error) {
@@ -41,21 +62,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function loadStats() {
     try {
-      const tabs = await chrome.tabs.query({});
-      const activeTab = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabs = await API.tabs.query({});
+      const activeTab = await API.tabs.query({ active: true, currentWindow: true });
+
+      const response = await new Promise(resolve => {
+        API.runtime.sendMessage({ action: 'getTabStates' }, response => {
+          resolve(response || { tabStates: [] });
+        });
+      });
       
-      const totalTabs = tabs.length;
+      const tabStatesMap = new Map(response.tabStates || []);
       const backgroundTabs = tabs.filter(tab => !tab.active);
-      const memoryEstimate = calculateMemoryEstimate(backgroundTabs.length);
+
+      let optimizedCount = 0;
+      for (const tab of backgroundTabs) {
+        const tabStateObj = tabStatesMap.get(tab.id);
+        if (tabStateObj && tabStateObj.state !== 'active') {
+          optimizedCount++;
+        }
+      }
+
+      const memoryEstimate = calculateMemoryEstimate(optimizedCount);
       
       updateStat('memory-saved', memoryEstimate);
-      updateStat('tabs-count', backgroundTabs.length);
+      updateStat('tabs-count', optimizedCount);
       
       if (activeTab && activeTab[0]) {
         updateCurrentTab(activeTab[0]);
       }
       
-      renderBackgroundTabs(backgroundTabs);
+      renderBackgroundTabs(backgroundTabs, tabStatesMap);
     } catch (error) {
       console.error('LightX Popup: Error loading stats:', error);
     }
@@ -73,7 +109,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function animateValue(element, start, end, duration) {
-    if (start === end) return;
+    if (start === end) {
+      element.textContent = end;
+      return;
+    }
     
     const range = end - start;
     const minTimer = 50;
@@ -84,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let endTime = startTime + duration;
     let timer;
     
-    function run() {
+    def = function run() {
       let now = new Date().getTime();
       let remaining = Math.max((endTime - now) / duration, 0);
       let value = Math.round(end - (remaining * range));
@@ -157,19 +196,22 @@ document.addEventListener('DOMContentLoaded', function() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="10"/></svg>`;
   }
 
+  // Box Icon
   function getBoxIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`;
   }
 
+  // Film Icon
   function getFilmIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><rect x="2" y="2" width="20" height="20" rx="2.18"/><path d="M7 2v20"/><path d="M17 2v20"/><path d="M2 12h20"/><path d="M2 7h5"/><path d="M2 17h5"/><path d="M17 17h5"/><path d="M17 7h5"/></svg>`;
   }
 
+  // Music Icon
   function getMusicIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v20"/></svg>`;
   }
 
-  function renderBackgroundTabs(tabs) {
+  function renderBackgroundTabs(tabs, tabStatesMap) {
     const listEl = document.getElementById('tabs-list');
     
     if (!listEl) return;
@@ -182,7 +224,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortedTabs = tabs.slice(0, 10);
     
     listEl.innerHTML = sortedTabs.map((tab, index) => {
-      const state = getTabState(index);
+      const tabStateObj = tabStatesMap.get(tab.id);
+      const state = tabStateObj ? tabStateObj.state : 'active';
       const icon = getFaviconIcon(tab.url);
       
       return `
@@ -201,18 +244,13 @@ document.addEventListener('DOMContentLoaded', function() {
       item.addEventListener('click', async () => {
         const tabId = parseInt(item.dataset.tabId);
         try {
-          await chrome.tabs.update(tabId, { active: true });
+          await API.tabs.update(tabId, { active: true });
           window.close();
         } catch (error) {
           console.error('LightX Popup: Error switching tab:', error);
         }
       });
     });
-  }
-
-  function getTabState(index) {
-    const states = ['eco', 'rest', 'deep'];
-    return states[index % 3];
   }
 
   function getStateLabel(state) {
@@ -236,6 +274,14 @@ document.addEventListener('DOMContentLoaded', function() {
     return text.substring(0, maxLength) + '...';
   }
 
+  function getPageURL(pageName) {
+    const manifest = API.runtime.getManifest();
+    if (manifest.action && manifest.action.default_popup && manifest.action.default_popup.startsWith('html/')) {
+      return API.runtime.getURL('html/' + pageName);
+    }
+    return API.runtime.getURL('ui/' + pageName);
+  }
+
   function setupEventListeners() {
     document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -245,12 +291,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.getElementById('settings-btn')?.addEventListener('click', () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL('ui/settings.html') });
+      API.tabs.create({ url: getPageURL('settings.html') });
       window.close();
     });
     
     document.getElementById('dashboard-btn')?.addEventListener('click', () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL('ui/dashboard.html') });
+      API.tabs.create({ url: getPageURL('dashboard.html') });
       window.close();
     });
   }
@@ -259,8 +305,8 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       currentMode = mode;
       updateModeButtons();
-      await chrome.storage.local.set({ lightxMode: mode });
-      await chrome.runtime.sendMessage({ action: 'setMode', mode: mode });
+      await API.storage.local.set({ lightxMode: mode });
+      await API.runtime.sendMessage({ action: 'setMode', mode: mode });
       showModeChangeFeedback(mode);
     } catch (error) {
       console.error('LightX Popup: Error setting mode:', error);

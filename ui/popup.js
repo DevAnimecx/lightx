@@ -44,18 +44,33 @@ document.addEventListener('DOMContentLoaded', function() {
       const tabs = await chrome.tabs.query({});
       const activeTab = await chrome.tabs.query({ active: true, currentWindow: true });
       
-      const totalTabs = tabs.length;
+      const response = await new Promise(resolve => {
+        chrome.runtime.sendMessage({ action: 'getTabStates' }, response => {
+          resolve(response || { tabStates: [] });
+        });
+      });
+
+      const tabStatesMap = new Map(response.tabStates || []);
       const backgroundTabs = tabs.filter(tab => !tab.active);
-      const memoryEstimate = calculateMemoryEstimate(backgroundTabs.length);
+
+      let optimizedCount = 0;
+      for (const tab of backgroundTabs) {
+        const tabStateObj = tabStatesMap.get(tab.id);
+        if (tabStateObj && tabStateObj.state !== 'active') {
+          optimizedCount++;
+        }
+      }
+
+      const memoryEstimate = calculateMemoryEstimate(optimizedCount);
       
       updateStat('memory-saved', memoryEstimate);
-      updateStat('tabs-count', backgroundTabs.length);
+      updateStat('tabs-count', optimizedCount);
       
       if (activeTab && activeTab[0]) {
         updateCurrentTab(activeTab[0]);
       }
       
-      renderBackgroundTabs(backgroundTabs);
+      renderBackgroundTabs(backgroundTabs, tabStatesMap);
     } catch (error) {
       console.error('LightX Popup: Error loading stats:', error);
     }
@@ -73,7 +88,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function animateValue(element, start, end, duration) {
-    if (start === end) return;
+    if (start === end) {
+      element.textContent = end;
+      return;
+    }
     
     const range = end - start;
     const minTimer = 50;
@@ -141,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
   }
 
-  function getCodeIcon() {
+  def = function getCodeIcon() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="m8 18-6-6 6-6"/><path d="m16 6 6 6-6 6"/></svg>`;
   }
 
@@ -169,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v20"/></svg>`;
   }
 
-  function renderBackgroundTabs(tabs) {
+  function renderBackgroundTabs(tabs, tabStatesMap) {
     const listEl = document.getElementById('tabs-list');
     
     if (!listEl) return;
@@ -182,7 +200,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortedTabs = tabs.slice(0, 10);
     
     listEl.innerHTML = sortedTabs.map((tab, index) => {
-      const state = getTabState(index);
+      const tabStateObj = tabStatesMap.get(tab.id);
+      const state = tabStateObj ? tabStateObj.state : 'active';
       const icon = getFaviconIcon(tab.url);
       
       return `
@@ -210,11 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function getTabState(index) {
-    const states = ['eco', 'rest', 'deep'];
-    return states[index % 3];
-  }
-
   function getStateLabel(state) {
     const labels = {
       'active': 'Active',
@@ -236,6 +250,14 @@ document.addEventListener('DOMContentLoaded', function() {
     return text.substring(0, maxLength) + '...';
   }
 
+  function getPageURL(pageName) {
+    const manifest = chrome.runtime.getManifest();
+    if (manifest.action && manifest.action.default_popup && manifest.action.default_popup.startsWith('html/')) {
+      return chrome.runtime.getURL('html/' + pageName);
+    }
+    return chrome.runtime.getURL('ui/' + pageName);
+  }
+
   function setupEventListeners() {
     document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -245,12 +267,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.getElementById('settings-btn')?.addEventListener('click', () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL('ui/settings.html') });
+      chrome.tabs.create({ url: getPageURL('settings.html') });
       window.close();
     });
     
     document.getElementById('dashboard-btn')?.addEventListener('click', () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL('ui/dashboard.html') });
+      chrome.tabs.create({ url: getPageURL('dashboard.html') });
       window.close();
     });
   }
